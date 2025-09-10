@@ -24,8 +24,9 @@ export default function LoginPage() {
         throw new Error(data?.error || "Login failed");
       }
       router.replace("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Login failed");
     } finally {
       setLoading(false);
     }

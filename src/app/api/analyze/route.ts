@@ -61,16 +61,18 @@ export async function POST(req: Request) {
           .from("analysis_reports")
           .update({ status: "completed", report_data: output })
           .eq("id", report.id);
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
         await supabase
           .from("analysis_reports")
-          .update({ status: "failed", report_data: { error: e?.message || "analysis failed" } })
+          .update({ status: "failed", report_data: { error: message || "analysis failed" } })
           .eq("id", report.id);
       }
     })();
 
     return NextResponse.json({ search_id: search.id, report_id: report.id });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Unexpected error" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message || "Unexpected error" }, { status: 500 });
   }
 }

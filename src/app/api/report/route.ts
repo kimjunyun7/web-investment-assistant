@@ -32,7 +32,8 @@ export async function GET(req: Request) {
       created_at: report.created_at,
       updated_at: report.updated_at,
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Unexpected error" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message || "Unexpected error" }, { status: 500 });
   }
 }
