@@ -4,7 +4,7 @@ import { runAnalysis } from "@/lib/analysis/pipeline";
 
 export async function POST(req: Request) {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
