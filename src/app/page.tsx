@@ -1,6 +1,13 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -20,9 +27,7 @@ export default function Home() {
             </code>
             .
           </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
+          <li className="tracking-[-.01em]">Welcome, {user.email}</li>
         </ol>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
