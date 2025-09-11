@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useRef } from "react";
+
 // Minimal typings for the global TradingView widget namespace
 type TVWidgetConfig = {
   autosize?: boolean;
@@ -24,16 +27,6 @@ type TVNamespace = { widget: TVWidgetConstructor };
 declare global {
   interface Window {
     TradingView: TVNamespace;
-  }
-}
-"use client";
-import { useEffect, useRef } from "react";
-
-declare global {
-  interface Window {
-    TradingView?: {
-      widget: (options: Record<string, unknown>) => void;
-    };
   }
 }
 
