@@ -1,3 +1,31 @@
+// Minimal typings for the global TradingView widget namespace
+type TVWidgetConfig = {
+  autosize?: boolean;
+  symbol: string;
+  interval?: string | number;
+  timezone?: string;
+  theme?: string;
+  style?: string | number;
+  locale?: string;
+  toolbar_bg?: string;
+  enable_publishing?: boolean;
+  hide_top_toolbar?: boolean;
+  hide_legend?: boolean;
+  allow_symbol_change?: boolean;
+  save_image?: boolean;
+  studies?: string[];
+  container_id: string;
+  height?: number;
+};
+
+type TVWidgetConstructor = new (config: TVWidgetConfig) => unknown;
+type TVNamespace = { widget: TVWidgetConstructor };
+
+declare global {
+  interface Window {
+    TradingView: TVNamespace;
+  }
+}
 "use client";
 import { useEffect, useRef } from "react";
 
