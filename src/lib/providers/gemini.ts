@@ -87,11 +87,18 @@ Return STRICT JSON that matches exactly this schema (no extra keys, no markdown,
     try {
       const parsed = JSON.parse(jsonString) as InvestmentReportV1;
       // Light validation/coercion to ensure required fields exist
+      // Narrow investment_period_level to 1|2|3|4|5 without using 'any'
+      const levelRaw = (parsed as { investment_period_level?: unknown }).investment_period_level;
+      const levelNum = typeof levelRaw === "number" ? levelRaw : Number(levelRaw);
+      const levelSafe = (Number.isInteger(levelNum) && levelNum >= 1 && levelNum <= 5
+        ? (levelNum as 1 | 2 | 3 | 4 | 5)
+        : (input.investmentLevel as 1 | 2 | 3 | 4 | 5));
+
       return {
         version: "version" in parsed ? parsed.version : "v1",
         ticker: parsed.ticker ?? input.ticker,
         asset_type: parsed.asset_type ?? input.assetType,
-        investment_period_level: (parsed.investment_period_level as any) ?? (input.investmentLevel as 1 | 2 | 3 | 4 | 5),
+        investment_period_level: levelSafe,
         summary_outlook: parsed.summary_outlook ?? "",
         technical_analysis: parsed.technical_analysis ?? "",
         key_levels: parsed.key_levels ?? { support: [], resistance: [] },

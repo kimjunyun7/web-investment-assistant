@@ -32,7 +32,6 @@ export default function TradingViewChart({ symbol, height = 520, interval = "D",
       containerRef.current.innerHTML = "";
 
       // Use 'new' per TradingView embed docs
-      // eslint-disable-next-line new-cap
       new window.TradingView.widget({
         autosize: true,
         symbol,
