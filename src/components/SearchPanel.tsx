@@ -40,7 +40,6 @@ export default function SearchPanel() {
   const [open, setOpen] = useState(false);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Suggestion | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollAttemptsRef = useRef<number>(0);
@@ -89,7 +88,7 @@ export default function SearchPanel() {
       setLastSubmitted({ symbol: ticker, asset: assetKind });
 
       // Start polling
-      pollTimerRef.current && clearInterval(pollTimerRef.current);
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       pollAttemptsRef.current = 0;
       pollTimerRef.current = setInterval(async () => {
         try {
@@ -147,7 +146,6 @@ export default function SearchPanel() {
     if (q.length < 2) {
       setSuggestions([]);
       setOpen(false);
-      setSelected(null);
       setSuggestError(null);
       return;
     }
@@ -297,7 +295,6 @@ export default function SearchPanel() {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelected(s);
                             setQuery(s.name);
                             setOpen(false);
                             // 제안 클릭 시 즉시 분석 시작

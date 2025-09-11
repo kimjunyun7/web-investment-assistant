@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 interface AlphaMatch {
-  [key: string]: string;
+  [key: string]: string | undefined;
   "1. symbol": string;
   "2. name": string;
   "3. type": string;
