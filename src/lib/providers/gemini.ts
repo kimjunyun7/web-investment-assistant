@@ -40,7 +40,9 @@ export interface InvestmentReportV1 {
   _raw?: string; // model raw text (optional)
 }
 
-export async function generateReport(input: AnalysisPromptInput): Promise<InvestmentReportV1> {
+export type GeminiReport = InvestmentReportV1;
+
+export async function generateReport(input: AnalysisPromptInput): Promise<GeminiReport> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
 
@@ -85,7 +87,7 @@ Return STRICT JSON that matches exactly this schema (no extra keys, no markdown,
     // Attempt to parse JSON; if wrapped in code fences, strip them
     const jsonString = text.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
     try {
-      const parsed = JSON.parse(jsonString) as InvestmentReportV1;
+      const parsed = JSON.parse(jsonString) as GeminiReport;
       // Light validation/coercion to ensure required fields exist
       // Narrow investment_period_level to 1|2|3|4|5 without using 'any'
       const levelRaw = (parsed as { investment_period_level?: unknown }).investment_period_level;
@@ -109,7 +111,7 @@ Return STRICT JSON that matches exactly this schema (no extra keys, no markdown,
         strategy: parsed.strategy ?? { entry_price: null, stop_loss: null, rationale: "" },
         references: parsed.references ?? [],
         _raw: parsed._raw,
-      } as InvestmentReportV1;
+      } as GeminiReport;
     } catch {
       // Fallback structure
       return {
