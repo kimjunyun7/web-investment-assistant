@@ -12,13 +12,34 @@ export async function GET(req: Request) {
     // public endpoint; rate-limited — fine for small usage
   });
   if (!res.ok) return NextResponse.json({ error: `CoinGecko error ${res.status}` }, { status: 502 });
-  const json = await res.json();
+  const json: { coins?: Array<{ id: string; symbol: string; name: string }> } = await res.json();
 
-  const items = (json?.coins || []).map((c: any) => ({
-    id: c.id as string,
+  const basic = (json?.coins ?? []).map((c) => ({
+    id: c.id,
     symbol: String(c.symbol || "").toUpperCase(),
-    name: c.name as string,
+    name: c.name,
   }));
+
+  // Enrich top N with market cap rank via /coins/markets for better ordering
+  const topIds = basic.slice(0, Math.min(10, basic.length)).map((c) => c.id);
+  let rankMap: Record<string, number | undefined> = {};
+  if (topIds.length) {
+    const mr = await fetch(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(topIds.join(","))}&order=market_cap_desc&per_page=${topIds.length}&page=1&sparkline=false`
+    );
+    if (mr.ok) {
+      const arr: Array<{ id: string; market_cap_rank?: number }> = await mr.json();
+      rankMap = Object.fromEntries(arr.map((a) => [a.id, a.market_cap_rank]));
+    }
+  }
+
+  const items = basic
+    .map((c) => ({ ...c, market_cap_rank: rankMap[c.id] }))
+    .sort((a, b) => {
+      const ar = a.market_cap_rank ?? Number.POSITIVE_INFINITY;
+      const br = b.market_cap_rank ?? Number.POSITIVE_INFINITY;
+      return ar - br; // lower rank = bigger cap
+    });
 
   return NextResponse.json({ items });
 }
