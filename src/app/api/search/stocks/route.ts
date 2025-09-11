@@ -1,5 +1,29 @@
 import { NextResponse } from "next/server";
 
+interface AlphaMatch {
+  [key: string]: string;
+  "1. symbol": string;
+  "2. name": string;
+  "3. type": string;
+  "4. region": string;
+  "8. currency": string;
+  "9. matchScore"?: string;
+}
+
+interface AlphaSearchResponse {
+  bestMatches?: AlphaMatch[];
+}
+
+type StockItem = {
+  symbol: string;
+  name: string;
+  region?: string;
+  currency?: string;
+  type?: string;
+  matchScore?: number;
+  marketCap?: number;
+};
+
 // Alpha Vantage SYMBOL_SEARCH for equities
 // Docs: https://www.alphavantage.co/documentation/#symbolsearch
 export async function GET(req: Request) {
@@ -10,7 +34,7 @@ export async function GET(req: Request) {
 
   const key = process.env.ALPHA_VANTAGE_API_KEY;
 
-  let json: any = null;
+  let json: AlphaSearchResponse | null = null;
   if (key) {
     const sp = new URLSearchParams({ function: "SYMBOL_SEARCH", keywords: query, apikey: key });
     try {
@@ -22,7 +46,7 @@ export async function GET(req: Request) {
   }
 
   // Map to a common suggestion shape (include matchScore)
-  let base = (json?.bestMatches || []).map((m: Record<string, string>) => ({
+  let base: StockItem[] = (json?.bestMatches || []).map((m: AlphaMatch) => ({
     symbol: m["1. symbol"],
     name: m["2. name"],
     region: m["4. region"],
@@ -41,8 +65,16 @@ export async function GET(req: Request) {
         },
       });
       if (y.ok) {
-        const jy: any = await y.json();
-        const quotes: any[] = Array.isArray(jy.quotes) ? jy.quotes : [];
+        const jy: { quotes?: Array<{
+          symbol: string;
+          shortname?: string;
+          longname?: string;
+          exchange?: string;
+          currency?: string;
+          quoteType?: string;
+          marketCap?: number;
+        }> } = await y.json();
+        const quotes = Array.isArray(jy.quotes) ? jy.quotes : [];
         base = quotes
           .filter((q) => q.quoteType === "EQUITY" || q.quoteType === "ETF")
           .map((q) => ({
@@ -58,7 +90,7 @@ export async function GET(req: Request) {
     } catch {}
   }
 
-  let items = base;
+  let items: StockItem[] = base;
 
   // Optionally enrich top N with market cap (Alpha Vantage OVERVIEW). Beware of rate limits.
   if (wantCap && base.length > 0 && key) {
@@ -80,7 +112,7 @@ export async function GET(req: Request) {
     const rest = base.slice(enriched.length);
     items = [...enriched, ...rest];
     // Sort by marketCap desc first, then matchScore desc
-    items.sort((a: any, b: any) => {
+    items.sort((a: StockItem, b: StockItem) => {
       const am = a.marketCap ?? -1;
       const bm = b.marketCap ?? -1;
       if (am !== bm) return bm - am;
@@ -88,7 +120,7 @@ export async function GET(req: Request) {
     });
   } else {
     // Fallback sort by matchScore only
-    items.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+    items.sort((a: StockItem, b: StockItem) => (b.matchScore || 0) - (a.matchScore || 0));
   }
 
   return NextResponse.json({ items });
