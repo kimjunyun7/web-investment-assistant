@@ -32,6 +32,7 @@ type CryptoSuggestion = {
 type Suggestion = StockSuggestion | CryptoSuggestion;
 
 export default function SearchPanel() {
+  const isRecord = (val: unknown): val is Record<string, unknown> => typeof val === "object" && val !== null;
   const [query, setQuery] = useState("");
   // Asset 유형 버튼 제거: 선택한 제안에서 자산 유형을 추론합니다
   const [level, setLevel] = useState<number>(3);
@@ -109,10 +110,11 @@ export default function SearchPanel() {
           setReportStatus(j.status);
           if (j.status === "completed" || j.status === "failed") {
             // Normalize payload: our API stores { aggregated, news, report }
-            const payload = (j.report_data as any) || null;
-            const gemini = payload && typeof payload === "object" && "report" in (payload as Record<string, unknown>)
-              ? (payload as Record<string, unknown>)["report"]
-              : payload;
+            const payload: unknown = j.report_data ?? null;
+            let gemini: unknown = payload;
+            if (isRecord(payload) && "report" in payload) {
+              gemini = (payload as Record<string, unknown>).report;
+            }
             setReportData(gemini ?? null);
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);
             setAnalyzing(false);
@@ -379,7 +381,7 @@ export default function SearchPanel() {
                 {analyzing && <span className="ml-2 animate-pulse opacity-70">분석 중...</span>}
               </div>
               {/* Pretty report */}
-              {reportData && <ReportDisplay report={reportData} />}
+              {reportData != null && <ReportDisplay report={reportData} />}
               {/* Raw fallback if needed */}
               {!reportData && (
                 <div className="text-xs opacity-70">결과를 불러오는 중...</div>
